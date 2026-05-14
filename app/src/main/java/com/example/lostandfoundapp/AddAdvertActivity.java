@@ -1,18 +1,26 @@
 package com.example.lostandfoundapp;
 
+import android.Manifest;
+import android.content.Context;
 import android.content.Intent;
+import android.content.pm.PackageManager;
+import android.location.Location;
+import android.location.LocationListener;
+import android.location.LocationManager;
 import android.net.Uri;
 import android.os.Bundle;
-import android.provider.MediaStore;
 import android.widget.Button;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.RadioButton;
 import android.widget.RadioGroup;
+import android.widget.TextView;
 import android.widget.Toast;
 
 import androidx.activity.EdgeToEdge;
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.core.app.ActivityCompat;
 import androidx.core.graphics.Insets;
 import androidx.core.view.ViewCompat;
 import androidx.core.view.WindowInsetsCompat;
@@ -33,14 +41,21 @@ public class AddAdvertActivity extends AppCompatActivity {
     EditText editDescription;
     EditText editDate;
     EditText editLocation;
-
     EditText editCategory;
 
     Button buttonSaveAdvert;
     Button buttonChooseImage;
+    Button buttonGetCurrentLocation;
 
     ImageView imagePreview;
+    TextView textCoordinates;
+
     Uri selectedImageUri;
+
+    LocationManager locationManager;
+
+    double selectedLatitude = 0.0;
+    double selectedLongitude = 0.0;
 
     AppDatabase db;
 
@@ -69,7 +84,16 @@ public class AddAdvertActivity extends AppCompatActivity {
 
         buttonSaveAdvert = findViewById(R.id.buttonSaveAdvert);
         buttonChooseImage = findViewById(R.id.buttonChooseImage);
+        buttonGetCurrentLocation = findViewById(R.id.buttonGetCurrentLocation);
+
         imagePreview = findViewById(R.id.imagePreview);
+        textCoordinates = findViewById(R.id.textCoordinates);
+
+        locationManager = (LocationManager) getSystemService(Context.LOCATION_SERVICE);
+
+        buttonGetCurrentLocation.setOnClickListener(v -> {
+            getCurrentLocation();
+        });
 
         buttonChooseImage.setOnClickListener(v -> {
             Intent intent = new Intent(Intent.ACTION_OPEN_DOCUMENT);
@@ -82,6 +106,7 @@ public class AddAdvertActivity extends AppCompatActivity {
         buttonSaveAdvert.setOnClickListener(v -> {
 
             String postType;
+
             if (radioLost.isChecked()) {
                 postType = "Lost";
             } else {
@@ -95,28 +120,40 @@ public class AddAdvertActivity extends AppCompatActivity {
             String location = editLocation.getText().toString();
             String category = editCategory.getText().toString();
 
-
             String postedTime = new SimpleDateFormat("dd/MM/yyyy HH:mm", Locale.getDefault()).format(new Date());
-
 
             if (selectedImageUri == null) {
                 Toast.makeText(this, "Please choose an image", Toast.LENGTH_SHORT).show();
                 return;
             }
 
+            if (selectedLatitude == 0.0 && selectedLongitude == 0.0) {
+                Toast.makeText(this, "Please get current location before saving", Toast.LENGTH_SHORT).show();
+                return;
+            }
+
             String imageUriString = selectedImageUri.toString();
 
-            Advert advert = new Advert(postType, name, phone, description, date, location, category, postedTime, imageUriString);
+            Advert advert = new Advert(
+                    postType,
+                    name,
+                    phone,
+                    description,
+                    date,
+                    location,
+                    category,
+                    postedTime,
+                    imageUriString,
+                    selectedLatitude,
+                    selectedLongitude
+            );
 
             db.advertDao().insertAdvert(advert);
 
             Toast.makeText(this, "Advert saved", Toast.LENGTH_SHORT).show();
 
             finish();
-
         });
-
-
 
         ViewCompat.setOnApplyWindowInsetsListener(findViewById(R.id.main), (v, insets) -> {
             Insets systemBars = insets.getInsets(WindowInsetsCompat.Type.systemBars());
@@ -124,6 +161,55 @@ public class AddAdvertActivity extends AppCompatActivity {
             return insets;
         });
     }
+
+    private void getCurrentLocation() {
+
+        if (ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) != PackageManager.PERMISSION_GRANTED &&
+                ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) != PackageManager.PERMISSION_GRANTED) {
+
+            ActivityCompat.requestPermissions(this,
+                    new String[]{Manifest.permission.ACCESS_FINE_LOCATION},
+                    200);
+
+            return;
+        }
+
+        Toast.makeText(this, "Getting current location...", Toast.LENGTH_SHORT).show();
+
+        locationManager.requestLocationUpdates(
+                LocationManager.GPS_PROVIDER,
+                1000,
+                0,
+                new LocationListener() {
+                    @Override
+                    public void onLocationChanged(@NonNull Location location) {
+                        selectedLatitude = location.getLatitude();
+                        selectedLongitude = location.getLongitude();
+
+                        textCoordinates.setText("Lat: " + selectedLatitude + ", Lng: " + selectedLongitude);
+                        editLocation.setText(selectedLatitude + ", " + selectedLongitude);
+
+                        Toast.makeText(AddAdvertActivity.this, "Current location saved", Toast.LENGTH_SHORT).show();
+
+                        locationManager.removeUpdates(this);
+                    }
+                }
+        );
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, @NonNull String[] permissions, @NonNull int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+
+        if (requestCode == 200) {
+            if (grantResults.length > 0 && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                getCurrentLocation();
+            } else {
+                Toast.makeText(this, "Location permission denied", Toast.LENGTH_SHORT).show();
+            }
+        }
+    }
+
     @Override
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);

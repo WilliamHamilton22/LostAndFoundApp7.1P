@@ -20,7 +20,10 @@ public class Advert {
     public String postedTime;
     public String imageUri;
 
-    public Advert(String postType, String name, String phone, String description, String date, String location, String category, String postedTime, String imageUri) {
+    public double latitude;
+    public double longitude;
+
+    public Advert(String postType, String name, String phone, String description, String date, String location, String category, String postedTime, String imageUri, double latitude, double longitude) {
         this.postType = postType;
         this.name = name;
         this.phone = phone;
@@ -29,6 +32,9 @@ public class Advert {
         this.location = location;
         this.category = category;
         this.postedTime = postedTime;
-        this. imageUri = imageUri;
+        this.imageUri = imageUri;
+        this.longitude = longitude;
+        this.latitude = latitude;
+
     }
 }

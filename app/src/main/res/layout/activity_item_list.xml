@@ -46,8 +46,8 @@
 
     <Button
         android:id="@+id/buttonFilter"
-        android:layout_width="152dp"
-        android:layout_height="45dp"
+        android:layout_width="173dp"
+        android:layout_height="52dp"
         android:text="Filter"
         app:layout_constraintBottom_toBottomOf="parent"
         app:layout_constraintEnd_toEndOf="parent"

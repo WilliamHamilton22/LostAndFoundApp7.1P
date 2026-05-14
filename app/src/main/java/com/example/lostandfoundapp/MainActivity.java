@@ -3,6 +3,7 @@ package com.example.lostandfoundapp;
 import android.content.Intent;
 import android.os.Bundle;
 import android.widget.Button;
+import android.widget.EditText;
 
 import androidx.activity.EdgeToEdge;
 import androidx.appcompat.app.AppCompatActivity;
@@ -14,6 +15,8 @@ public class MainActivity extends AppCompatActivity {
 
     Button buttonCreateAdvert;
     Button buttonShowItems;
+    Button buttonShowMap;
+    EditText editRadius;
 
 
     @Override
@@ -24,6 +27,8 @@ public class MainActivity extends AppCompatActivity {
 
         buttonCreateAdvert = findViewById(R.id.buttonCreateAdvert);
         buttonShowItems = findViewById(R.id.buttonShowItems);
+        buttonShowMap = findViewById(R.id.buttonShowMap);
+        editRadius = findViewById(R.id.editRadius);
 
         buttonCreateAdvert.setOnClickListener(v -> {
             Intent intent = new Intent(MainActivity.this, AddAdvertActivity.class);
@@ -32,6 +37,14 @@ public class MainActivity extends AppCompatActivity {
 
         buttonShowItems.setOnClickListener(v -> {
             Intent intent = new Intent(MainActivity.this, ItemListActivity.class);
+            startActivity(intent);
+        });
+
+        buttonShowMap.setOnClickListener(v -> {
+            String radiusText = editRadius.getText().toString();
+
+            Intent intent = new Intent(MainActivity.this, MapActivity.class);
+            intent.putExtra("radius", radiusText);
             startActivity(intent);
         });
 
